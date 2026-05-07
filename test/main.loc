@@ -1,0 +1,136 @@
+module vector.test (test)
+
+import vector
+import root
+
+type Py => Int = "int"
+type Py => Str = "str"
+type Py => Real = "float"
+type Py => Bool = "bool"
+type Py => Tuple2 a b = "tuple" a b
+type Py => List a = "list" a
+
+-- Vector type mapping for the Python pool. The test framework's sourced
+-- Python helpers (testEqual, printMsg, printResult) receive Vector values
+-- over the wire from whichever language is under test. Without this mapping,
+-- the Python pool generated for non-Py language tests (vector-cpp, vector-r)
+-- would lack a concrete type for Vector and fail to typecheck the test's
+-- let bindings (`zeros1 ... :: Vector ...`, etc.) -- even when Python never
+-- executes those bindings, the typechecker still needs a concrete type for
+-- them. Mapping to "numpy.ndarray" matches the morloc deserializer's
+-- numpy fast path.
+type Py => (Vector (n :: Nat) a) = "numpy.ndarray" n a
+
+-------------------------------------------------------------------------------
+-- Test framework
+--
+-- testEqual is a generic structural comparator (Str description, two values,
+-- and the running (fails, total) counter). Tests cross the boundary into
+-- Python with arguments already reduced to primitive wire forms (lists and
+-- tuples), so the framework needs no vector-specific Python machinery.
+
+source Py from "vector-test.py" ("testEqual", "printMsg", "printResult")
+testEqual
+    :: Str
+    -> a
+    -> a
+    -> (Int, Int)
+    -> (Int, Int)
+printMsg :: Str -> a -> a
+printResult :: (Int, Int) -> (Int, Int)
+
+-------------------------------------------------------------------------------
+-- Vector probes
+--
+-- Vector is its own flat form (no Packable); use the value directly. The
+-- framework compares structurally, so a Vector flows out as the language's
+-- native 1D numeric array and is checked against a literal `[a]`.
+
+testGroup
+    :: Str
+    -> ((Int, Int) -> (Int, Int))
+    -> (Int, Int)
+    -> (Int, Int)
+testGroup msg tests = tests . printMsg msg
+
+passed :: (Int, Int) -> Bool
+passed t = 0 == (.0 t)
+
+test = runTests (0,0)
+
+-------------------------------------------------------------------------------
+-- Test suite
+
+runTests :: (Int, Int) -> Bool
+runTests =
+  ( passed
+  . printResult
+  . testGroup "Round-trip (non-uniform)" testRoundtripNonUniform
+  . testGroup "Fill" testFill
+  . testGroup "Ones" testOnes
+  . testGroup "Zeros" testZeros
+  )
+
+-------------------------------------------------------------------------------
+-- Round-trip with non-uniform values
+--
+-- A round-trip from a non-uniform sequence catches a class of bugs that
+-- uniform-value tests (zeros, ones, fill) cannot: any element-permutation
+-- error in the language's Vector mapping or wire encoding would corrupt the
+-- values' positions but not their multiset, and identical elements make the
+-- corruption invisible. With increasing values, every permutation differs.
+--
+-- The vector flows from the test pool (Python) over the wire to the language
+-- under test (which sees it as the language's native Vector form), then
+-- straight back to Python via testEqual. This exercises the full
+-- serialize/deserialize/serialize loop for the language's Vector mapping.
+
+testRoundtripNonUniform :: (Int, Int) -> (Int, Int)
+testRoundtripNonUniform =
+  let r4  = [1.0, 2.0, 3.0, 4.0]                                 :: Vector 4 Real
+      r8  = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]             :: Vector 8 Real
+      r16 = [ 1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0
+            , 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0]     :: Vector 16 Real
+      e4  = [1.0, 2.0, 3.0, 4.0]                                 :: Vector 4 Real
+      e8  = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]             :: Vector 8 Real
+      e16 = [ 1.0,  2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0
+            , 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0]     :: Vector 16 Real
+  in
+  ( testEqual "Vector 4 Real round-trip"  r4  e4
+  . testEqual "Vector 8 Real round-trip"  r8  e8
+  . testEqual "Vector 16 Real round-trip" r16 e16
+  )
+
+-------------------------------------------------------------------------------
+-- zeros
+
+testZeros :: (Int, Int) -> (Int, Int)
+testZeros =
+  ( testEqual "zeros1 0" (zeros1 0 :: Vector 0 Real) []
+  . testEqual "zeros1 1" (zeros1 1 :: Vector 1 Real) [0.0]
+  . testEqual "zeros1 3" (zeros1 3 :: Vector 3 Real) [0.0, 0.0, 0.0]
+  . testEqual "zeros1 6" (zeros1 6 :: Vector 6 Real) [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  )
+
+-------------------------------------------------------------------------------
+-- ones
+
+testOnes :: (Int, Int) -> (Int, Int)
+testOnes =
+  ( testEqual "ones1 0" (ones1 0 :: Vector 0 Real) []
+  . testEqual "ones1 1" (ones1 1 :: Vector 1 Real) [1.0]
+  . testEqual "ones1 3" (ones1 3 :: Vector 3 Real) [1.0, 1.0, 1.0]
+  . testEqual "ones1 6" (ones1 6 :: Vector 6 Real) [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  )
+
+-------------------------------------------------------------------------------
+-- fill
+
+testFill :: (Int, Int) -> (Int, Int)
+testFill =
+  ( testEqual "fill1 0.0 0"  (fill1 0.0 0    :: Vector 0 Real) []
+  . testEqual "fill1 7.0 3"  (fill1 7.0 3    :: Vector 3 Real) [7.0, 7.0, 7.0]
+  . testEqual "fill1 -1.5 4" (fill1 (-1.5) 4 :: Vector 4 Real) [-1.5, -1.5, -1.5, -1.5]
+  . testEqual "fill1 0.5 8"  (fill1 0.5 8    :: Vector 8 Real)
+        [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+  )

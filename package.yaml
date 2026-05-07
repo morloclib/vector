@@ -1,0 +1,11 @@
+name: vector
+version: 0.1.0
+homepage: https://github.com/morloclib/vector
+synopsis: Nat-parameterised dense 1D vectors
+description: Type definition and construction (zeros, ones, fill) for Nat-parameterised dense 1D vectors. Serves as the columnar primitive for tables and the rank-1 base for higher-rank tensors.
+category: data
+license: MIT
+author: "Zebulun Arendsee"
+maintainer: "z@morloc.io"
+github: https://github.com/morloclib/vector
+bug-reports: https://github.com/morloclib/vector
