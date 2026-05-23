@@ -2,18 +2,18 @@ module vector (*)
 
 import root
 
---' A Nat-dimensioned dense vector (n-element 1D dense array).
---'
---' Vector shares its memory representation with the generic List (`Vector n a`
---' is a List `[a]` at the wire level), so it interoperates with all List-typed
---' code without conversion. The differences from List:
---'   * the Nat parameter `n` enables compile-time dimensional typechecking
---'   * each language backend maps Vector to its high-performance unboxed
---'     numeric array (std::vector, numpy.ndarray, R atomic vector), avoiding
---'     boxed-object overhead
---'
---' This makes Vector the canonical 1D dense numeric container: the columnar
---' building block for tables and the rank-1 base for higher-rank tensors.
+-- Vector shares its memory representation with the generic List (`Vector n a`
+-- is a List `[a]` at the wire level), so it interoperates with all List-typed
+-- code without conversion. The differences from List:
+--   * the Nat parameter `n` enables compile-time dimensional typechecking
+--   * each language backend maps Vector to its high-performance unboxed
+--     numeric array (std::vector, numpy.ndarray, R atomic vector), avoiding
+--     boxed-object overhead
+--
+-- This makes Vector the canonical 1D dense numeric container: the columnar
+-- building block for tables and the rank-1 base for higher-rank tensors.
+
+--' n-element 1D dense array.
 --' metavar: VECTOR
 type Vector (n :: Nat) a = List a
 
