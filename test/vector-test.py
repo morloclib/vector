@@ -24,12 +24,22 @@ def info(msg):
 # "truth value of an array is ambiguous" because tuple equality reduces
 # element-wise comparisons to bool, and `ndarray == ndarray` returns
 # an ndarray. Walk both values in lockstep, deferring to np.allclose
-# for any ndarray pair (using shape match + element-wise tolerance).
+# for numeric ndarrays (shape match + element-wise float tolerance) and
+# recursing element-by-element for object-dtype ndarrays (since
+# np.allclose internally calls np.isfinite, which rejects dtype=object).
 def _deep_equal(x, y):
     if isinstance(x, np.ndarray) or isinstance(y, np.ndarray):
         xa = np.asarray(x)
         ya = np.asarray(y)
-        return xa.shape == ya.shape and bool(np.allclose(xa, ya))
+        if xa.shape != ya.shape:
+            return False
+        # Boxed (dtype=object) arrays hold arbitrary Python objects --
+        # BigInt, strings, nested types -- which numeric ufuncs reject.
+        # Use element-wise structural comparison so a Vector of BigInts
+        # / Strings / records is comparable.
+        if xa.dtype == object or ya.dtype == object:
+            return all(_deep_equal(xa.flat[i], ya.flat[i]) for i in range(xa.size))
+        return bool(np.allclose(xa, ya))
     if isinstance(x, (tuple, list)) and isinstance(y, (tuple, list)):
         if len(x) != len(y):
             return False
