@@ -44,11 +44,16 @@ type Py => (Vector (n :: Nat) a) = "numpy.ndarray" n a
 -- Python with arguments already reduced to primitive wire forms (lists and
 -- tuples), so the framework needs no vector-specific Python machinery.
 
-source Py from "vector-test.py" ("testEqual", "printMsg", "printResult")
+source Py from "vector-test.py" ("testEqual", "testTrue", "printMsg", "printResult")
 testEqual
     :: Str
     -> a
     -> a
+    -> (Int, Int)
+    -> (Int, Int)
+testTrue
+    :: Str
+    -> Bool
     -> (Int, Int)
     -> (Int, Int)
 printMsg :: Str -> a -> a
@@ -79,7 +84,43 @@ runTests =
   . testGroup "Fill"                        testFill
   . testGroup "Ones"                        testOnes
   . testGroup "Zeros"                       testZeros
+  . testGroup "Slicer"                      testSlicer
   )
+
+testSlicer :: (Int, Int) -> (Int, Int)
+testSlicer =
+  let ten = f ([0,1,2,3,4,5,6,7,8,9] :: Vector 10 Int)
+      four = f ([0,1,2,3] :: Vector 4 Int)
+  in ( testTrue ".[0] ten == 0" (.[0] ten == 0)
+     . testTrue ".[-1] ten == 9" (.[-1] ten == 9)
+     . testTrue ".[-2] ten == 8" (.[-2] ten == 8)
+     . testTrue ".[1+1] ten == 2" (.[1+1] ten == 2)
+     . testTrue ".[:] ten == ten" (.[:] ten == ten)
+     . testTrue ".[0:0] ten == []" (.[0:0] ten == ([] :: Vector 0 Int))
+     . testTrue ".[1:1] ten == []" (.[1:1] ten == ([] :: Vector 0 Int))
+     . testTrue ".[1:0] ten == []" (.[1:0] ten == ([] :: Vector 0 Int))
+     . testTrue ".[8:99] ten == [8,9]" (.[8:99] ten == ([8,9] :: Vector 2 Int))
+     . testTrue ".[6:-1] ten == [6,7,8]" (.[6:-1] ten == ( [6,7,8] :: Vector 3 Int ))
+     . testTrue ".[0:-9] ten == [0]" (.[0:-9] ten == ( [0] :: Vector 1 Int ))
+     . testTrue ".[0:-10] ten == []" (.[0:-10] ten == ( [] :: Vector 0 Int ))
+     . testTrue ".[-1:0] ten == []" (.[-1:0] ten == ( [] :: Vector 0 Int ))
+     . testTrue ".[-1:] ten == [9]" (.[-1:] ten == ( [9] :: Vector 1 Int ))
+     . testTrue ".[-2:-1] ten == .[8:9] ten" (.[-2:-1] ten == .[8:9] ten)
+     . testTrue ".[(1 :: Int):2] ten == [1]" (.[(1 :: Int):2] ten == ( [1] :: Vector 1 Int ))
+     . testTrue ".[::] ten == ten" (.[::] ten == ten)
+     . testTrue ".[::2] ten == [0,2,4,6,8]" (.[::2] ten == ( [0,2,4,6,8] :: Vector 5 Int ))
+     . testTrue ".[::-1] four == [3,2,1,0]" (.[::-1] four == ( [3,2,1,0] :: Vector 4 Int ))
+     . testTrue ".[::-2] ten == [9,7,5,3,1]" (.[::-2] ten == ( [9,7,5,3,1] :: Vector 5 Int ))
+     . testTrue ".[7::] ten == [7,8,9]" (.[7::] ten == ( [7,8,9] :: Vector 3 Int ))
+     . testTrue ".[:3:] ten == [0,1,2]" (.[:3:] ten == ( [0,1,2] :: Vector 3 Int ))
+     . testTrue ".[0:3:] ten == [0,1,2]" (.[0:3:] ten == ( [0,1,2] :: Vector 3 Int ))
+     . testTrue ".[7::1] ten == [7,8,9]" (.[7::1] ten == ( [7,8,9] :: Vector 3 Int ))
+     . testTrue ".[:3:1] ten == [0,1,2]" (.[:3:1] ten == ( [0,1,2] :: Vector 3 Int ))
+     . testTrue ".[0:3:1] ten == [0,1,2]" (.[0:3:1] ten == ( [0,1,2] :: Vector 3 Int ))
+     . testTrue ".[2:7:2] ten == [2,4,6]" (.[2:7:2] ten == ( [2,4,6] :: Vector 3 Int ))
+     . testTrue ".[7:2:-2] ten == [7,5,3]" (.[7:2:-2] ten == ( [7,5,3] :: Vector 3 Int ))
+     )
+
 
 -------------------------------------------------------------------------------
 -- zeros / ones / fill: constructors return @Vector d a@ where @a@ is

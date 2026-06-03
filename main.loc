@@ -17,15 +17,54 @@ import root
 --' metavar: VECTOR
 newtype Vector (n :: Nat) a = List a
 
-instance Semigroup (Vector n a)
-instance Monoid (Vector n a)
+-- Graded concat: (vec1 ++ vec2) :: Vector m a -> Vector n a -> Vector (m+n) a
+-- Replaces the prior closed Semigroup/Monoid instances which lied about
+-- the result dim being the same as the input dim.
+instance SemigroupDim Vector
+instance MonoidDim Vector
 instance Functor (Vector n)
 instance Foldable (Vector n)
 instance Eq (Vector n a)
 instance Ord (Vector n a)
 
+-- Bracket access: myVec[i] via Indexable (Vector n).
+instance Indexable (Vector n)
+
+-- Bracket slice: myVec[1:3] :: Vector m a. The result dim is unrelated
+-- to the input dim (m is a fresh Nat variable that the typechecker
+-- unifies based on use-site context).
+instance SliceableDim Vector
+
 -- Required for constructin Vectors from list literals
 instance Packable (List a) (Vector n a)
+
+-- instance Integral (Vector n UInt8)
+-- instance Integral (Vector n UInt16)
+-- instance Integral (Vector n UInt32)
+-- instance Integral (Vector n UInt64)
+-- instance Integral (Vector n Int8)
+-- instance Integral (Vector n Int16)
+-- instance Integral (Vector n Int32)
+-- instance Integral (Vector n Int64)
+-- instance Integral (Vector n Float32)
+-- instance Integral (Vector n Float64)
+--
+-- instance Numeric (Vector n UInt8)
+-- instance Numeric (Vector n UInt16)
+-- instance Numeric (Vector n UInt32)
+-- instance Numeric (Vector n UInt64)
+-- instance Numeric (Vector n Int8)
+-- instance Numeric (Vector n Int16)
+-- instance Numeric (Vector n Int32)
+-- instance Numeric (Vector n Int64)
+-- instance Numeric (Vector n Float32)
+-- instance Numeric (Vector n Float64)
+
+-- infixr 6 (.<>.)
+--
+-- instance Integral a => Integral (Vector n a) where
+--
+-- instance Numeric a => Numeric (Vector n a) where
 
 -- Construction (zero-filled)
 zeros1 :: d:Int -> Vector d a

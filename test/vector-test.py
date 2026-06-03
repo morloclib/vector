@@ -62,6 +62,15 @@ def testEqual(msg, x, y, results):
         print(f"    got:      {x}")
         return (nfails + 1, ntests + 1)
 
+def testTrue(msg, is_true, results):
+    (nfails, ntests) = results
+    if is_true:
+        print(f"  {msg} ... {good('PASS')}")
+        return (nfails, ntests + 1)
+    else:
+        print(f"  {msg} ... {bad('FAIL')}")
+        return (nfails + 1, ntests + 1)
+
 def printMsg(msg, x):
     print(info(msg))
     return x
