@@ -3,16 +3,16 @@ module vector.test (test)
 import vector
 import root
 
-type Py => UInt8 = "int"
-type Py => UInt16 = "int"
-type Py => UInt32 = "int"
-type Py => UInt64 = "int"
-type Py => Int8 = "int"
-type Py => Int16 = "int"
-type Py => Int32 = "int"
-type Py => Int64 = "int"
-type Py => Float32 = "float"
-type Py => Float64 = "float"
+type Py => U8 = "int"
+type Py => U16 = "int"
+type Py => U32 = "int"
+type Py => U64 = "int"
+type Py => I8 = "int"
+type Py => I16 = "int"
+type Py => I32 = "int"
+type Py => I64 = "int"
+type Py => F32 = "float"
+type Py => F64 = "float"
 
 type Py => Int = "int"
 type Py => Str = "str"
@@ -125,7 +125,7 @@ testSlicer =
 -------------------------------------------------------------------------------
 -- zeros / ones / fill: constructors return @Vector d a@ where @a@ is
 -- determined by the call-site annotation. The Python / R / C++ backends
--- currently honour @Real@ (Float64) reliably; constructor coverage for
+-- currently honour @Real@ (F64) reliably; constructor coverage for
 -- other element types is deferred to a future pass.
 
 testZeros :: (Int, Int) -> (Int, Int)
@@ -162,16 +162,16 @@ testFill =
 testFunctor :: (Int, Int) -> (Int, Int)
 testFunctor =
   ( testEqual "map Int" (map (* 2) ([1, 2, 3] :: Vector 3 Int)) (f ([2, 4, 6] :: Vector 3 Int))
-  . testEqual "map Int8" (map (* 2) ([1, 2, 3] :: Vector 3 Int8)) (f ([2, 4, 6] :: Vector 3 Int8))
-  . testEqual "map Int16" (map (* 2) ([1, 2, 3] :: Vector 3 Int16)) (f ([2, 4, 6] :: Vector 3 Int16))
-  . testEqual "map Int32" (map (* 2) ([1, 2, 3] :: Vector 3 Int32)) (f ([2, 4, 6] :: Vector 3 Int32))
-  . testEqual "map Int64" (map (* 2) ([1, 2, 3] :: Vector 3 Int64)) (f ([2, 4, 6] :: Vector 3 Int64))
-  . testEqual "map UInt8" (map (* 2) ([1, 2, 3] :: Vector 3 UInt8)) (f ([2, 4, 6] :: Vector 3 UInt8))
-  . testEqual "map UInt16" (map (* 2) ([1, 2, 3] :: Vector 3 UInt16)) (f ([2, 4, 6] :: Vector 3 UInt16))
-  . testEqual "map UInt32" (map (* 2) ([1, 2, 3] :: Vector 3 UInt32)) (f ([2, 4, 6] :: Vector 3 UInt32))
-  . testEqual "map UInt64" (map (* 2) ([1, 2, 3] :: Vector 3 UInt64)) (f ([2, 4, 6] :: Vector 3 UInt64))
-  . testEqual "map Float32" (map (* 2.0) ([1.0, 2.0, 3.0] :: Vector 3 Float32)) (f ([2.0, 4.0, 6.0] :: Vector 3 Float32))
-  . testEqual "map Float64" (map (* 2.0) ([1.0, 2.0, 3.0] :: Vector 3 Float64)) (f ([2.0, 4.0, 6.0] :: Vector 3 Float64))
+  . testEqual "map I8" (map (* 2) ([1, 2, 3] :: Vector 3 I8)) (f ([2, 4, 6] :: Vector 3 I8))
+  . testEqual "map I16" (map (* 2) ([1, 2, 3] :: Vector 3 I16)) (f ([2, 4, 6] :: Vector 3 I16))
+  . testEqual "map I32" (map (* 2) ([1, 2, 3] :: Vector 3 I32)) (f ([2, 4, 6] :: Vector 3 I32))
+  . testEqual "map I64" (map (* 2) ([1, 2, 3] :: Vector 3 I64)) (f ([2, 4, 6] :: Vector 3 I64))
+  . testEqual "map U8" (map (* 2) ([1, 2, 3] :: Vector 3 U8)) (f ([2, 4, 6] :: Vector 3 U8))
+  . testEqual "map U16" (map (* 2) ([1, 2, 3] :: Vector 3 U16)) (f ([2, 4, 6] :: Vector 3 U16))
+  . testEqual "map U32" (map (* 2) ([1, 2, 3] :: Vector 3 U32)) (f ([2, 4, 6] :: Vector 3 U32))
+  . testEqual "map U64" (map (* 2) ([1, 2, 3] :: Vector 3 U64)) (f ([2, 4, 6] :: Vector 3 U64))
+  . testEqual "map F32" (map (* 2.0) ([1.0, 2.0, 3.0] :: Vector 3 F32)) (f ([2.0, 4.0, 6.0] :: Vector 3 F32))
+  . testEqual "map F64" (map (* 2.0) ([1.0, 2.0, 3.0] :: Vector 3 F64)) (f ([2.0, 4.0, 6.0] :: Vector 3 F64))
   . testEqual "map Real" (map (* 2.0) ([1.0, 2.0, 3.0] :: Vector 3 Real)) (f ([2.0, 4.0, 6.0] :: Vector 3 Real))
   . testEqual "map Bool id" (map id ([True, False, True] :: Vector 3 Bool)) (f ([True, False, True] :: Vector 3 Bool))
   . testEqual "map Str id" (map id (["a", "b", "c"] :: Vector 3 Str)) (f (["a", "b", "c"] :: Vector 3 Str))
@@ -186,16 +186,16 @@ testFunctor =
 testFold :: (Int, Int) -> (Int, Int)
 testFold =
   ( testEqual "fold sum Int" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 Int)) 15
-  . testEqual "fold sum Int8" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 Int8)) (15 :: Int8)
-  . testEqual "fold sum Int16" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 Int16)) (15 :: Int16)
-  . testEqual "fold sum Int32" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 Int32)) (15 :: Int32)
-  . testEqual "fold sum Int64" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 Int64)) (15 :: Int64)
-  . testEqual "fold sum UInt8" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 UInt8)) (15 :: UInt8)
-  . testEqual "fold sum UInt16" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 UInt16)) (15 :: UInt16)
-  . testEqual "fold sum UInt32" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 UInt32)) (15 :: UInt32)
-  . testEqual "fold sum UInt64" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 UInt64)) (15 :: UInt64)
-  . testEqual "fold sum Float32" (fold (+) 0.0 ([1.0, 2.0, 3.0, 4.0, 5.0] :: Vector 5 Float32)) (15.0 :: Float32)
-  . testEqual "fold sum Float64" (fold (+) 0.0 ([1.0, 2.0, 3.0, 4.0, 5.0] :: Vector 5 Float64)) (15.0 :: Float64)
+  . testEqual "fold sum I8" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 I8)) (15 :: I8)
+  . testEqual "fold sum I16" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 I16)) (15 :: I16)
+  . testEqual "fold sum I32" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 I32)) (15 :: I32)
+  . testEqual "fold sum I64" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 I64)) (15 :: I64)
+  . testEqual "fold sum U8" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 U8)) (15 :: U8)
+  . testEqual "fold sum U16" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 U16)) (15 :: U16)
+  . testEqual "fold sum U32" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 U32)) (15 :: U32)
+  . testEqual "fold sum U64" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 U64)) (15 :: U64)
+  . testEqual "fold sum F32" (fold (+) 0.0 ([1.0, 2.0, 3.0, 4.0, 5.0] :: Vector 5 F32)) (15.0 :: F32)
+  . testEqual "fold sum F64" (fold (+) 0.0 ([1.0, 2.0, 3.0, 4.0, 5.0] :: Vector 5 F64)) (15.0 :: F64)
   . testEqual "fold sum Real" (fold (+) 0.0 ([1.0, 2.0, 3.0, 4.0, 5.0] :: Vector 5 Real)) (15.0 :: Real)
   . testEqual "fold sum empty" (fold (+) 0 ([] :: Vector 0 Int)) 0
   )
@@ -213,8 +213,8 @@ testEq :: (Int, Int) -> (Int, Int)
 testEq =
   ( testEqual "eq Int self"      True  (([1, 2, 3] :: Vector 3 Int)     == (f ([1, 2, 3] :: Vector 3 Int)))
   . testEqual "eq Int diff"      False (([1, 2, 3] :: Vector 3 Int)     == (f ([1, 2, 4] :: Vector 3 Int)))
-  . testEqual "eq Int64 self"    True  (([1, 2, 3] :: Vector 3 Int64)   == (f ([1, 2, 3] :: Vector 3 Int64)))
-  . testEqual "eq Float64 self"  True  (([1.5, 2.5] :: Vector 2 Float64) == (f ([1.5, 2.5] :: Vector 2 Float64)))
+  . testEqual "eq I64 self"    True  (([1, 2, 3] :: Vector 3 I64)   == (f ([1, 2, 3] :: Vector 3 I64)))
+  . testEqual "eq F64 self"  True  (([1.5, 2.5] :: Vector 2 F64) == (f ([1.5, 2.5] :: Vector 2 F64)))
   . testEqual "eq Real self"     True  (([1.5, 2.5] :: Vector 2 Real)   == (f ([1.5, 2.5] :: Vector 2 Real)))
   . testEqual "eq Real diff"     False (([1.5, 2.5] :: Vector 2 Real)   == (f ([1.5, 9.9] :: Vector 2 Real)))
   . testEqual "eq Bool self"     True  (([True, False] :: Vector 2 Bool) == (f ([True, False] :: Vector 2 Bool)))
