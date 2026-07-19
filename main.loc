@@ -67,10 +67,10 @@ instance Packable (List a) (Vector n a)
 -- instance Numeric a => Numeric (Vector n a) where
 
 -- Construction (zero-filled)
-zeros1 :: d:Int -> Vector d a
+zeros1 :: d@Int -> Vector d a
 
 -- Construction (one-filled)
-ones1 :: d:Int -> Vector d a
+ones1 :: d@Int -> Vector d a
 
 -- Construction (filled with given value)
-fill1 :: a -> d:Int -> Vector d a
+fill1 :: a -> d@Int -> Vector d a
