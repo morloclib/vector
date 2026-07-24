@@ -12,6 +12,21 @@ import root
 --
 -- This makes Vector the canonical 1D dense numeric container: the columnar
 -- building block for tables and the rank-1 base for higher-rank tensors.
+--
+-- Gradual dimensional annotation:
+--   The Nat parameter is opt-in. Users who don't care about the length
+--   can omit it entirely:
+--     * `Vector 3 U8`   -- concrete, exactly 3 elements
+--     * `Vector n U8`   -- polymorphic, caller determines the length
+--     * `Vector U8`     -- gradual, no length claim
+--   All three coexist. A concrete `Vector 3 U8` can flow into a
+--   `Vector U8` slot and vice-versa (the subtype rule treats a missing
+--   Nat as wildcard-compatible with any concrete Nat). Het-length
+--   containers work naturally: `[Vector U8]` accepts elements of
+--   different lengths because each element's Nat is independent.
+--
+--   Use `size v :: U64` from the `Sizeable` class to query length at
+--   runtime regardless of which annotation form the signature uses.
 
 --' n-element 1D dense array.
 --' metavar: VECTOR
