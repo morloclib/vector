@@ -53,33 +53,24 @@ instance SliceableDim Vector
 -- Required for constructin Vectors from list literals
 instance Packable (List a) (Vector n a)
 
--- instance Integral (Vector n U8)
--- instance Integral (Vector n U16)
--- instance Integral (Vector n U32)
--- instance Integral (Vector n U64)
--- instance Integral (Vector n I8)
--- instance Integral (Vector n I16)
--- instance Integral (Vector n I32)
--- instance Integral (Vector n I64)
--- instance Integral (Vector n F32)
--- instance Integral (Vector n F64)
+-- Elementwise arithmetic. The shared `n` is the point: two vectors can only
+-- be combined when the type already says they are the same length, which is
+-- stronger than the List version can express. Deriving a column from two
+-- others -- `ac / an` -- is the most ordinary thing a table program does.
 --
--- instance Numeric (Vector n U8)
--- instance Numeric (Vector n U16)
--- instance Numeric (Vector n U32)
--- instance Numeric (Vector n U64)
--- instance Numeric (Vector n I8)
--- instance Numeric (Vector n I16)
--- instance Numeric (Vector n I32)
--- instance Numeric (Vector n I64)
--- instance Numeric (Vector n F32)
--- instance Numeric (Vector n F64)
+-- `zero` is not implementable here: it would have to produce a vector of a
+-- length nothing supplies. Methods resolve per use site, so the operators
+-- are usable and only `zero` at a Vector is an error. `zeros1` takes the
+-- length as an argument and is what you want instead.
+instance Integral a => Integral (Vector n a)
+instance Numeric a => Numeric (Vector n a)
 
--- infixr 6 (.<>.)
---
--- instance Integral a => Integral (Vector n a) where
---
--- instance Numeric a => Numeric (Vector n a) where
+-- Elementwise conversion to Real. This cannot be a `RealLike` instance:
+-- that class returns a scalar `Real`, so an instance at Vector would mean
+-- collapsing the vector to one number. Without it a derived column has to
+-- go back through a list to change its element type, which undoes the
+-- point of the arithmetic instances above.
+realOf :: Vector n a -> Vector n Real
 
 -- Construction (zero-filled)
 zeros1 :: d@Int -> Vector d a
