@@ -2,92 +2,39 @@ module vector.test (test)
 
 import vector
 import root
-
-type Py => U8 = "int"
-type Py => U16 = "int"
-type Py => U32 = "int"
-type Py => U64 = "int"
-type Py => I8 = "int"
-type Py => I16 = "int"
-type Py => I32 = "int"
-type Py => I64 = "int"
-type Py => F32 = "float"
-type Py => F64 = "float"
-
-type Py => Int = "int"
-type Py => Str = "str"
-type Py => Real = "float"
-type Py => Bool = "bool"
-type Py => Tuple2 a b = "tuple" a b
-type Py => List a = "list" a
+import unittest
 
 -- a helper to force evaluation of a vector in the test language
 f :: Vector n a -> Vector n a
 f = map id
 
--- Vector type mapping for the Python pool. The test framework's sourced
--- Python helpers (testEqual, printMsg, printResult) receive Vector values
--- over the wire from whichever language is under test. Without this mapping,
--- the Python pool generated for non-Py language tests (vector-cpp, vector-r)
--- would lack a concrete type for Vector and fail to typecheck the test's
--- let bindings (`zeros1 ... :: Vector ...`, etc.) -- even when Python never
--- executes those bindings, the typechecker still needs a concrete type for
--- them. Mapping to "numpy.ndarray" matches the morloc deserializer's
--- numpy fast path.
+-- Vector type mapping for the Python pool. The unittest harness receives
+-- Vector values over the wire from whichever language is under test. Without
+-- this mapping, the Python pool generated for non-Py language tests
+-- (vector-cpp, vector-r) would lack a concrete type for Vector and fail to
+-- typecheck the test's let bindings (`zeros1 ... :: Vector ...`, etc.) -- even
+-- when Python never executes those bindings, the typechecker still needs a
+-- concrete type for them. Mapping to "numpy.ndarray" matches the morloc
+-- deserializer's numpy fast path.
 type Py => (Vector (n :: Nat) a) = "numpy.ndarray" n a
 
--------------------------------------------------------------------------------
--- Test framework
---
--- testEqual is a generic structural comparator (Str description, two values,
--- and the running (fails, total) counter). Tests cross the boundary into
--- Python with arguments already reduced to primitive wire forms (lists and
--- tuples), so the framework needs no vector-specific Python machinery.
-
-source Py from "vector-test.py" ("testEqual", "testTrue", "printMsg", "printResult")
-testEqual
-    :: Str
-    -> a
-    -> a
-    -> (Int, Int)
-    -> (Int, Int)
-testTrue
-    :: Str
-    -> Bool
-    -> (Int, Int)
-    -> (Int, Int)
-printMsg :: Str -> a -> a
-printResult :: (Int, Int) -> (Int, Int)
-
-testGroup
-    :: Str
-    -> ((Int, Int) -> (Int, Int))
-    -> (Int, Int)
-    -> (Int, Int)
-testGroup msg tests = tests . printMsg msg
-
-passed :: (Int, Int) -> Bool
-passed t = 0 == (.0 t)
-
-test = runTests (0,0)
+test = suite runTests
 
 -------------------------------------------------------------------------------
 -- Test suite
 
-runTests :: (Int, Int) -> Bool
+runTests :: Test
 runTests =
-  ( passed
-  . printResult
-  . testGroup "Eq"                          testEq
-  . testGroup "Foldable (fold sum)"         testFold
-  . testGroup "Functor (map)"               testFunctor
-  . testGroup "Fill"                        testFill
-  . testGroup "Ones"                        testOnes
-  . testGroup "Zeros"                       testZeros
-  . testGroup "Slicer"                      testSlicer
+  ( group "Eq"                          testEq
+  . group "Foldable (fold sum)"         testFold
+  . group "Functor (map)"               testFunctor
+  . group "Fill"                        testFill
+  . group "Ones"                        testOnes
+  . group "Zeros"                       testZeros
+  . group "Slicer"                      testSlicer
   )
 
-testSlicer :: (Int, Int) -> (Int, Int)
+testSlicer :: Test
 testSlicer =
   let ten = f ([0,1,2,3,4,5,6,7,8,9] :: Vector 10 Int)
       four = f ([0,1,2,3] :: Vector 4 Int)
@@ -128,7 +75,7 @@ testSlicer =
 -- currently honour @Real@ (F64) reliably; constructor coverage for
 -- other element types is deferred to a future pass.
 
-testZeros :: (Int, Int) -> (Int, Int)
+testZeros :: Test
 testZeros =
   ( testEqual "zeros1 0" (zeros1 0 :: Vector 0 Real) (f ([] :: Vector 0 Real))
   . testEqual "zeros1 1" (zeros1 1 :: Vector 1 Real) (f ([0.0] :: Vector 1 Real))
@@ -136,7 +83,7 @@ testZeros =
   . testEqual "zeros1 6" (zeros1 6 :: Vector 6 Real) (f ([0.0, 0.0, 0.0, 0.0, 0.0, 0.0] :: Vector 6 Real))
   )
 
-testOnes :: (Int, Int) -> (Int, Int)
+testOnes :: Test
 testOnes =
   ( testEqual "ones1 0" (ones1 0 :: Vector 0 Real) (f ([] :: Vector 0 Real))
   . testEqual "ones1 1" (ones1 1 :: Vector 1 Real) (f ([1.0] :: Vector 1 Real))
@@ -144,7 +91,7 @@ testOnes =
   . testEqual "ones1 6" (ones1 6 :: Vector 6 Real) (f ([1.0, 1.0, 1.0, 1.0, 1.0, 1.0] :: Vector 6 Real))
   )
 
-testFill :: (Int, Int) -> (Int, Int)
+testFill :: Test
 testFill =
   ( testEqual "fill1 0.0 0"  (fill1 4.0 0    :: Vector 0 Real) (f ([] :: Vector 0 Real))
   . testEqual "fill1 7.0 3"  (fill1 7.0 3    :: Vector 3 Real) (f ([7.0, 7.0, 7.0] :: Vector 3 Real))
@@ -159,7 +106,7 @@ testFill =
 -- dtype=object boxed path on the Python side (Vector n Str and a
 -- nested-tuple Vector n (Int, Str)).
 
-testFunctor :: (Int, Int) -> (Int, Int)
+testFunctor :: Test
 testFunctor =
   ( testEqual "map Int" (map (* 2) ([1, 2, 3] :: Vector 3 Int)) (f ([2, 4, 6] :: Vector 3 Int))
   . testEqual "map I8" (map (* 2) ([1, 2, 3] :: Vector 3 I8)) (f ([2, 4, 6] :: Vector 3 I8))
@@ -183,7 +130,7 @@ testFunctor =
 -- Foldable: sum via @fold (+) zero@. The five-element ramp [1..5]
 -- has known sum 15 in every numeric width.
 
-testFold :: (Int, Int) -> (Int, Int)
+testFold :: Test
 testFold =
   ( testEqual "fold sum Int" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 Int)) 15
   . testEqual "fold sum I8" (fold (+) 0 ([1, 2, 3, 4, 5] :: Vector 5 I8)) (15 :: I8)
@@ -209,7 +156,7 @@ testFold =
 -- non-numeric / nested element types that go through the boxed
 -- dtype=object path on the Python side.
 
-testEq :: (Int, Int) -> (Int, Int)
+testEq :: Test
 testEq =
   ( testEqual "eq Int self"      True  (([1, 2, 3] :: Vector 3 Int)     == (f ([1, 2, 3] :: Vector 3 Int)))
   . testEqual "eq Int diff"      False (([1, 2, 3] :: Vector 3 Int)     == (f ([1, 2, 4] :: Vector 3 Int)))
